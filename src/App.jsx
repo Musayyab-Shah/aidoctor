@@ -5,12 +5,12 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
 import { Input } from '@/components/ui/input.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
-import { 
-  Heart, 
-  MessageCircle, 
-  Stethoscope, 
-  ShoppingBag, 
-  BookOpen, 
+import {
+  Heart,
+  MessageCircle,
+  Stethoscope,
+  ShoppingBag,
+  BookOpen,
   Send,
   Star,
   Clock,
@@ -245,41 +245,33 @@ function HealthTips() {
   )
 }
 
-// AI Doctor Chat Component
 function AIDoctorChat() {
   const [messages, setMessages] = useState([
     { type: 'bot', content: 'Hello! I\'m your AI Doctor. How can I help you today?' }
-  ])
-  const [inputMessage, setInputMessage] = useState('')
+  ]);
+  const [inputMessage, setInputMessage] = useState('');
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (inputMessage.trim()) {
-      setMessages([...messages, { type: 'user', content: inputMessage }])
-      setInputMessage('')
-      
-// ... inside AIDoctorChat component ...
+      const userMessage = inputMessage;
+      setMessages(prev => [...prev, { type: 'user', content: userMessage }]);
+      setInputMessage('');
 
-const handleSendMessage = async () => {
-  if (inputMessage.trim()) {
-    const userMessage = inputMessage;
-    setMessages(prev => [...prev, { type: 'user', content: userMessage }]);
-    setInputMessage('');
+      try {
+        const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
-    try {
-      const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const result = await model.generateContent(userMessage);
+        const response = await result.response;
+        const text = response.text();
 
-      const result = await model.generateContent(userMessage);
-      const response = await result.response;
-      const text = response.text();
-
-      setMessages(prev => [...prev, { type: 'bot', content: text }]);
-    } catch (error) {
-      console.error("Error communicating with Gemini API:", error);
-      setMessages(prev => [...prev, { type: 'bot', content: 'Sorry, I am unable to provide a response at the moment. Please try again later.' }]);
+        setMessages(prev => [...prev, { type: 'bot', content: text }]);
+      } catch (error) {
+        console.error("Error communicating with Gemini API:", error);
+        setMessages(prev => [...prev, { type: 'bot', content: 'Sorry, I am unable to provide a response at the moment. Please try again later.' }]);
+      }
     }
-  }
-};
+  };
 
   return (
     <section id="ai-doctor" className="py-20 bg-white">
@@ -332,8 +324,9 @@ const handleSendMessage = async () => {
         </Card>
       </div>
     </section>
-  )
+  );
 }
+
 
 // Diseases Section Component
 function DiseasesSection() {
@@ -650,4 +643,3 @@ function App() {
 }
 
 export default App
-
