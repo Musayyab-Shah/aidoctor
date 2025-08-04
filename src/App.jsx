@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { Button } from '@/components/ui/button.jsx'
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
 import { Input } from '@/components/ui/input.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
@@ -256,15 +257,29 @@ function AIDoctorChat() {
       setMessages([...messages, { type: 'user', content: inputMessage }])
       setInputMessage('')
       
-      // Simulate AI response
-      setTimeout(() => {
-        setMessages(prev => [...prev, { 
-          type: 'bot', 
-          content: 'Thank you for your question. This is a demo response. In a real implementation, this would connect to the Gemini API for intelligent health advice.' 
-        }])
-      }, 1000)
+// ... inside AIDoctorChat component ...
+
+const handleSendMessage = async () => {
+  if (inputMessage.trim()) {
+    const userMessage = inputMessage;
+    setMessages(prev => [...prev, { type: 'user', content: userMessage }]);
+    setInputMessage('');
+
+    try {
+      const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+      const result = await model.generateContent(userMessage);
+      const response = await result.response;
+      const text = response.text();
+
+      setMessages(prev => [...prev, { type: 'bot', content: text }]);
+    } catch (error) {
+      console.error("Error communicating with Gemini API:", error);
+      setMessages(prev => [...prev, { type: 'bot', content: 'Sorry, I am unable to provide a response at the moment. Please try again later.' }]);
     }
   }
+};
 
   return (
     <section id="ai-doctor" className="py-20 bg-white">
