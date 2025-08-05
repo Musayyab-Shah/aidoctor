@@ -245,33 +245,70 @@ function HealthTips() {
   )
 }
 
+
+
 function AIDoctorChat() {
   const [messages, setMessages] = useState([
-    { type: 'bot', content: 'Hello! I\'m your AI Doctor. How can I help you today?' }
+    { type: "bot", content: "Hello! I'm your AI Doctor. How can I help you today?" },
   ]);
-  const [inputMessage, setInputMessage] = useState('');
+  const [inputMessage, setInputMessage] = useState("");
 
   const handleSendMessage = async () => {
     if (inputMessage.trim()) {
       const userMessage = inputMessage;
-      setMessages(prev => [...prev, { type: 'user', content: userMessage }]);
-      setInputMessage('');
+      setMessages((prev) => [...prev, { type: "user", content: userMessage }]);
+      setInputMessage("");
 
       try {
         const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
-        const result = await model.generateContent(userMessage);
+        const result = await model.generateContent({
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: userMessage }],
+            },
+          ],
+        });
+
         const response = await result.response;
-        const text = response.text();
+        const text = response.candidates?.[0]?.content?.parts?.[0]?.text || "No response from AI.";
 
-        setMessages(prev => [...prev, { type: 'bot', content: text }]);
+        setMessages((prev) => [...prev, { type: "bot", content: text }]);
       } catch (error) {
         console.error("Error communicating with Gemini API:", error);
-        setMessages(prev => [...prev, { type: 'bot', content: 'Sorry, I am unable to provide a response at the moment. Please try again later.' }]);
+        setMessages((prev) => [
+          ...prev,
+          { type: "bot", content: "Sorry, I am unable to provide a response at the moment. Please try again later." },
+        ]);
       }
     }
   };
+
+  return (
+    <div className="chat-container">
+      <div className="messages">
+        {messages.map((msg, idx) => (
+          <div key={idx} className={`message ${msg.type}`}>
+            {msg.content}
+          </div>
+        ))}
+      </div>
+
+      <div className="input-box">
+        <input
+          type="text"
+          value={inputMessage}
+          onChange={(e) => setInputMessage(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+          placeholder="Type your message..."
+        />
+        <button onClick={handleSendMessage}>Send</button>
+      </div>
+    </div>
+  );
+}
 
   return (
     <section id="ai-doctor" className="py-20 bg-white">
